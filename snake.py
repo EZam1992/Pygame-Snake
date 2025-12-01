@@ -10,28 +10,67 @@ class SNAKE:
                      Vector2(6, 10), 
                      Vector2(7, 10)]
         self.direction = Vector2(1, 0)
+        self.new_block = False
         
     def draw_snake(self):
         for block in self.body:
             snake_rect = pygame.Rect(block.x * cell_size, block.y * cell_size, cell_size, cell_size)
             pygame.draw.rect(screen, (51, 153, 255), snake_rect)
 
-    def move_snake(self): 
-        body_copy = self.body[:-1]
-        body_copy.insert(0, body_copy[0] + self.direction)
-        self.body = body_copy[:]
+    def move_snake(self):
+
+        if self.new_block: 
+            body_copy = self.body[:] 
+            body_copy.insert(0, body_copy[0] + self.direction)
+            self.body = body_copy[:]
+            self.new_block = False
+        else:
+            body_copy = self.body[:-1]
+            body_copy.insert(0, body_copy[0] + self.direction)
+            self.body = body_copy[:]
+
+    def add_block(self): 
+        self.new_block = True
 
 
 class FRUIT:
     def __init__(self):
-        self.x = random.randint(0, cell_number - 1)
-        self.y = random.randint(0, cell_number - 1)
-        self.pos = Vector2(self.x, self.y)
+        self.randomize()
 
     def draw_fruit(self):
         fruit_rect = pygame.Rect(self.pos.x * cell_size, self.pos.y * cell_size, cell_size, cell_size)
         pygame.draw.rect(screen, (255, 102, 102), fruit_rect)
 
+    def randomize(self):
+
+        self.x = random.randint(0, cell_number - 1)
+        self.y = random.randint(0, cell_number - 1)
+        self.pos = Vector2(self.x, self.y)
+
+class MAIN:
+
+    def __init__(self):
+        self.snake = SNAKE() 
+        self.fruit = FRUIT()
+    
+    def update(self):
+        self.snake.move_snake()
+        self.check_colission()
+    
+    def draw_elements(self): 
+        self.fruit.draw_fruit()
+        self.snake.draw_snake() 
+    
+    def check_colission(self): 
+        if self.fruit.pos == self.snake.body[0]:
+            #reposition the fruit 
+            self.fruit.randomize()
+            #add another block to the snake
+            self.snake.add_block()
+
+
+    
+#initialize pygame modules 
 pygame.init()
 
 # variables used in the game 
@@ -46,9 +85,8 @@ pygame.time.set_timer(SCREEN_UPDATE, 150)
 screen = pygame.display.set_mode((cell_number * cell_size, cell_number * cell_size))
 clock = pygame.time.Clock() 
 
-#create the objects 
-fruit = FRUIT()
-snake = SNAKE()
+#create the main game object
+main_game = MAIN()
 
 #game loop
 while True: 
@@ -58,24 +96,23 @@ while True:
             pygame.quit()
             sys.exit()
         if event.type == SCREEN_UPDATE:
-            snake.move_snake()
+            main_game.update()
         if event.type == pygame.KEYDOWN: 
             if event.key == pygame.K_UP:
-                snake.direction = Vector2(0, -1)
+                main_game.snake.direction = Vector2(0, -1)
         if event.type == pygame.KEYDOWN: 
             if event.key == pygame.K_DOWN:
-                snake.direction = Vector2(0, 1)
+                main_game.snake.direction = Vector2(0, 1)
         if event.type == pygame.KEYDOWN: 
             if event.key == pygame.K_LEFT:
-                snake.direction = Vector2(-1, 0)
+                main_game.snake.direction = Vector2(-1, 0)
         if event.type == pygame.KEYDOWN: 
             if event.key == pygame.K_RIGHT:
-                snake.direction = Vector2(1, 0)            
+                main_game.snake.direction = Vector2(1, 0)            
 
 
     screen.fill(mainColor)
-    snake.draw_snake()
-    fruit.draw_fruit()
+    main_game.draw_elements()
     pygame.display.update()
     clock.tick(framerate)
     
